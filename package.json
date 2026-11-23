@@ -1,0 +1,26 @@
+{
+  "name": "github-upload-panel",
+  "version": "1.0.0",
+  "description": "可视化勾选文件并一键推送到 GitHub 的本地面板（Windows，零依赖）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js --open",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "win32"
+  ],
+  "keywords": [
+    "github",
+    "git",
+    "upload",
+    "gui",
+    "web-panel",
+    "github-cli",
+    "windows"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,18 @@
+# 运行时生成的文件
+config.json
+.port
+server.log
+*.log
+
+# 依赖（本项目零依赖，占位以防万一）
+node_modules/
+
+# 打包产物
+dist/
+*.zip
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

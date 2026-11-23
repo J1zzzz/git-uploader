@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GitHub 上传面板</title>
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-icon" viewBox="0 0 16 16" aria-hidden="true">
+      <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+    </svg>
+    <span class="brand-name">GitHub 上传面板</span>
+    <span class="brand-sub">可视化选择文件 → 一键推送</span>
+  </div>
+  <div class="topbar-right">
+    <span id="authStatus" class="chip chip-muted">检查登录状态…</span>
+    <button id="btnAuth" class="btn btn-ghost hidden">登录 GitHub</button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- 左侧：选目录 + 文件清单 -->
+  <section class="col-main">
+
+    <div class="card dir-card">
+      <div class="dir-row">
+        <label class="field-label" for="dirInput">项目目录</label>
+        <div class="dir-input-wrap">
+          <input id="dirInput" class="input mono" type="text" spellcheck="false"
+                 placeholder="例如 D:\Projects\my-app（也可点右侧「浏览」选择）" />
+          <button id="btnBrowse" class="btn btn-ghost btn-sq" title="浏览文件夹">浏览</button>
+          <button id="btnScan" class="btn btn-primary">扫描文件</button>
+        </div>
+      </div>
+      <div id="shortcuts" class="shortcuts"></div>
+      <div id="dirMeta" class="dir-meta hidden"></div>
+    </div>
+
+    <div class="card files-card">
+      <div class="files-head">
+        <div class="files-title">
+          <span>文件清单</span>
+          <span id="scanStat" class="muted-sm"></span>
+        </div>
+        <div class="files-tools">
+          <input id="search" class="input search" type="search" placeholder="搜索文件名…" />
+          <div class="segmented" id="filter">
+            <button class="seg active" data-filter="all">全部</button>
+            <button class="seg" data-filter="checked">已选</button>
+            <button class="seg" data-filter="unchecked">未选</button>
+            <button class="seg" data-filter="flagged">需注意</button>
+          </div>
+          <button id="btnCheckAll" class="btn btn-ghost btn-sm">全选</button>
+          <button id="btnUncheckAll" class="btn btn-ghost btn-sm">清空</button>
+        </div>
+      </div>
+      <div id="treeWrap" class="tree-wrap">
+        <div id="emptyState" class="empty-state">
+          <div class="empty-glyph">⌘</div>
+          <p>选择项目目录后点击「扫描文件」</p>
+          <p class="muted-sm">扫描后会列出所有待上传文件，可逐个勾选或按目录批量勾选</p>
+        </div>
+        <div id="tree" class="tree"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右侧：仓库设置 + 日志 -->
+  <aside class="col-side">
+    <div class="card">
+      <h3 class="card-title">仓库设置</h3>
+
+      <div class="form-row">
+        <label class="field-label" for="repoName">仓库名</label>
+        <input id="repoName" class="input mono" type="text" spellcheck="false" placeholder="my-project" />
+        <div class="field-hint" id="repoHint">将创建为 <code>—</code></div>
+      </div>
+
+      <div class="form-row">
+        <label class="field-label" for="repoDesc">描述（可选）</label>
+        <input id="repoDesc" class="input" type="text" placeholder="一句话说明这个项目" />
+      </div>
+
+      <div class="form-row">
+        <label class="field-label">可见性</label>
+        <div class="radio-group">
+          <label class="radio"><input type="radio" name="vis" value="private" checked /><span>私有</span></label>
+          <label class="radio"><input type="radio" name="vis" value="public" /><span>公开</span></label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="field-label" for="commitMsg">提交信息（留空自动生成）</label>
+        <input id="commitMsg" class="input" type="text" placeholder="feat: 初始提交" />
+      </div>
+
+      <div class="form-row">
+        <label class="switch">
+          <input id="createRepo" type="checkbox" checked />
+          <span class="switch-track"><span class="switch-dot"></span></span>
+          <span class="switch-label">GitHub 上自动创建同名仓库</span>
+        </label>
+        <label class="switch">
+          <input id="keepLocal" type="checkbox" checked />
+          <span class="switch-track"><span class="switch-dot"></span></span>
+          <span class="switch-label">在项目目录直接初始化（可后续增量推送）</span>
+        </label>
+        <div class="field-hint">取消勾选则复制到临时目录上传，<strong>完全不改动</strong>本地项目。</div>
+      </div>
+    </div>
+
+    <div class="card log-card">
+      <div class="log-head">
+        <h3 class="card-title">运行日志</h3>
+        <button id="btnClearLog" class="btn btn-ghost btn-sm">清空</button>
+      </div>
+      <pre id="log" class="log"></pre>
+    </div>
+  </aside>
+</main>
+
+<footer class="bottombar">
+  <div class="summary">
+    <span id="summaryText">尚未选择文件</span>
+    <span id="summarySize" class="muted-sm"></span>
+  </div>
+  <button id="btnUpload" class="btn btn-primary btn-lg" disabled>上传到 GitHub</button>
+</footer>
+
+<!-- 浏览目录模态 -->
+<div id="browseModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <strong>选择文件夹</strong>
+      <button class="btn btn-ghost btn-sm" data-close>关闭</button>
+    </div>
+    <div class="browse-path mono" id="browsePath"></div>
+    <div class="browse-list" id="browseList"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="browseUp">上一级</button>
+      <button class="btn btn-primary" id="browsePick">选择此文件夹</button>
+    </div>
+  </div>
+</div>
+
+<!-- 登录模态 -->
+<div id="authModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <strong>连接 GitHub</strong>
+      <button class="btn btn-ghost btn-sm" data-close>关闭</button>
+    </div>
+    <div class="auth-tabs">
+      <button class="tab active" data-tab="device">设备码授权（推荐）</button>
+      <button class="tab" data-tab="token">粘贴 Token</button>
+    </div>
+
+    <div class="tab-panel" data-panel="device">
+      <p class="muted-sm">点击下方按钮生成一次性验证码，然后在浏览器中打开 GitHub 输入即可，无需任何配置。</p>
+      <button id="btnDeviceStart" class="btn btn-primary">生成验证码</button>
+      <div id="deviceBox" class="device-box hidden">
+        <div class="device-code" id="deviceCode">--------</div>
+        <a id="deviceLink" class="btn btn-ghost" href="#" target="_blank" rel="noopener">打开 GitHub 授权页</a>
+        <div class="device-status" id="deviceStatus">等待你在浏览器中确认…</div>
+      </div>
+      <p class="muted-sm" style="margin-top:16px;padding-top:12px;border-top:1px dashed var(--border);line-height:1.7">
+        一直没反应？也可以在本机终端执行
+        <code>gh auth login --hostname github.com --git-protocol https --web</code>
+        完成登录，面板会在 8 秒内自动识别，无需再刷新。
+      </p>
+    </div>
+
+    <div class="tab-panel hidden" data-panel="token">
+      <p class="muted-sm">
+        在 <a href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=upload-panel"
+        target="_blank" rel="noopener">GitHub Token 页面</a> 生成一个勾选 <code>repo</code> + <code>workflow</code> 的 Token，粘贴到下方。
+      </p>
+      <input id="tokenInput" class="input mono" type="password" placeholder="ghp_..." />
+      <button id="btnTokenSave" class="btn btn-primary" style="margin-top:10px">保存并验证</button>
+    </div>
+  </div>
+</div>
+
+<!-- 版本分叉：由用户决定处理方式 -->
+<div id="conflictModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <strong>远程仓库有新的提交</strong>
+      <button class="btn btn-ghost btn-sm" data-close>关闭</button>
+    </div>
+    <div class="conflict-body">
+      <p id="conflictSummary" class="conflict-summary"></p>
+      <div id="conflictList" class="commit-list"></div>
+      <p class="muted-sm conflict-note">
+        <strong>合并</strong>会生成一个 merge commit，双方历史都保留，最安全；
+        <strong>变基</strong>把你的提交重放到远程之上，历史是一条直线；
+        <strong>强制覆盖</strong>会丢弃远程独有的提交，仅在确认远程内容不要了时使用。
+        若两边改了同一处代码，会中止并列出冲突文件，不会留下半完成状态。
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close>取消</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="btnStrategyForce">强制覆盖远程</button>
+      <button class="btn" id="btnStrategyRebase">变基</button>
+      <button class="btn btn-primary" id="btnStrategyMerge">合并</button>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
